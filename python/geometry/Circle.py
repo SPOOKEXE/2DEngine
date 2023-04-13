@@ -8,7 +8,7 @@ class Circle:
 	x = y = radius = None
 
 	def does_contain_point(self, point) -> bool:
-		return Intersect.does_circle_contains_point(self, point)
+		return Intersect.does_circle_contain_point(self, point)
 
 	def does_intersect_rectangle(self, rectangle) -> bool:
 		return Intersect.does_circle_intersect_rectangle(self, rectangle)

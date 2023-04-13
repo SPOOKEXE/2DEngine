@@ -4,7 +4,7 @@ from typing import Union
 
 FLOAT_TUP = tuple[float, float]
 
-def does_circle_contains_point(circle, point) -> bool:
+def does_circle_contain_point(circle, point) -> bool:
 	dx = (point.x - circle.x)
 	dy = (point.y - circle.y)
 	r = circle.radius
@@ -13,8 +13,21 @@ def does_circle_contains_point(circle, point) -> bool:
 def does_circle_intersect_rectangle(circle, rectangle) -> bool:
 	right = (rectangle.x + rectangle.w)
 	bottom = (rectangle.y + rectangle.h)
-	closestX = (circle.x < rectangle.x and rectangle.x or (circle.x > right and right or circle.x))
-	closestY = (circle.y < rectangle.y and rectangle.y or (circle.y > bottom and bottom or circle.y))
+	
+	closestX = circle.x
+	if circle.x < rectangle.x:
+		closestX = rectangle.x
+	elif circle.x > right:
+			closestX = right
+
+	closestY = circle.y
+	if circle.y < rectangle.y:
+		closestY = rectangle.y
+	elif circle.y > bottom:
+		closestY = bottom
+
+	#closestX = (circle.x < rectangle.x and rectangle.x or (circle.x > right and right or circle.x))
+	#closestY = (circle.y < rectangle.y and rectangle.y or (circle.y > bottom and bottom or circle.y))
 	dx = closestX - circle.x
 	dy = closestY - circle.y
 	return ( dx * dx + dy * dy ) <= (circle.radius * circle.radius)

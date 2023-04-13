@@ -82,11 +82,13 @@ class Simulation:
 		pass
 
 	def __construct_quad_trees(self) -> None:
-		half_x = ceil(self.__simulation_bounds[0] / 2)
-		half_y = ceil(self.__simulation_bounds[1] / 2)
-		bounds = Rectangle(-half_x, -half_y, half_x, half_y)
-		self.__objects_quadtree = QuadTree.QuadTree(boundary=bounds, shapes=self.__objects)
-		self.__agent_quadtree = QuadTree.QuadTree(boundary=bounds, shapes=self.__agents)
+		bounds = Rectangle(0, 0, self.__simulation_bounds[0], self.__simulation_bounds[1])
+
+		self.__objects_quadtree = QuadTree.QuadTree(boundary=bounds)
+		self.__objects_quadtree.insert_array(self.__objects)
+
+		self.__agent_quadtree = QuadTree.QuadTree(boundary=bounds)
+		self.__agent_quadtree.insert_array(self.__agents)
 
 	def __init__(self, simulation_bounds=(1280, 720)):
 		self.__simulation_bounds = ( int(simulation_bounds[0]), int(simulation_bounds[1]) )

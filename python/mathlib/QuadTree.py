@@ -1,5 +1,8 @@
 
 from typing import Union
+
+FLOAT_TUP = tuple[float, float]
+
 from os import path as os_path
 from sys import path as sys_path
 
@@ -13,7 +16,8 @@ from geometry.LineSegment import LineSegment
 
 sys_path.pop()
 
-DEFAULT_QUAD_TREE_CAPACITY = 4
+DEFAULT_QUAD_TREE_CAPACITY = 16
+MAX_QUAD_TREE_DEPTH = 6
 
 QD_T_COMPONENTS = Union[Rectangle, Circle, Point]
 QD_RANGE_COMPONENTS = Union[Rectangle, Circle]
@@ -22,6 +26,7 @@ VALID_CLASSES = [Rectangle , Circle , Point ]
 VALID_RANGE_CLASSES = [Rectangle , Circle ]
 
 class QuadTree:
+	depth = 0
 	boundary : Rectangle = None
 	capacity = -1
 	shapes : list[QD_T_COMPONENTS] = []
@@ -44,27 +49,35 @@ class QuadTree:
 		return False
 
 	@staticmethod
+	def find_ray_collision_with_y(ray : LineSegment, value1 : Union[Rectangle, Circle, LineSegment]) -> Union[FLOAT_TUP, tuple[FLOAT_TUP, FLOAT_TUP]]:
+		if issubclass(value1.__class__, Rectangle):
+			return ray.get_line_rectangle_intersection(value1)
+		elif issubclass(value1.__class__, Circle):
+			return ray.get_line_circle_intersection(value1)
+		elif issubclass(value1.__class__, LineSegment):
+			return ray.get_line_line_intersection(value1)
+		print("invalid collidable class was passed in.")
+		return None
+
+	@staticmethod
 	def does_x_collide_with_y(value0 : QD_T_COMPONENTS, value1 : QD_T_COMPONENTS) -> bool:
 		# if both are points, compare them
 		if value0.__class__ == value1.__class__ == Point.__class__:
 			return (value0.x == value1.x) and (value0.y == value1.y)
 
-		# if first argument is a point, flip the input
-		if value0.__class__ == Point.__class__:
-			return QuadTree.does_x_collide_with_y(value1, value0)
-
 		# passed value0 is a circle or rectangle
 		# also they all share the same function names,
 		# so we can keep it simple here
-		if value1.__class__ == Rectangle.__class__:
+		if issubclass(value1.__class__, Rectangle):
 			return value0.does_intersect_rectangle(value1)
-		elif value1.__class__ == LineSegment.__class__:
+		elif issubclass(value1.__class__, LineSegment):
 			return value0.does_intersect_line_segment(value1)
-		elif value1.__class__ == Circle.__class__:
-			print('c')
+		elif issubclass(value1.__class__, Circle):
 			return value0.does_intersect_circle(value1)
-		elif value1.__class__ == Point.__class__:
+		elif issubclass(value1.__class__, Point):
 			return value0.does_contain_point(value1)
+		print("invalid class was passed in.")
+		return False
 
 	def query(self, _range : Union[Rectangle, Circle], shape_array : Union[list, None]) -> list:
 		if VALID_RANGE_CLASSES.count(_range.__class__) == 0:
@@ -85,60 +98,57 @@ class QuadTree:
 
 	def insert_single(self, shape : QD_T_COMPONENTS) -> bool:
 		if not QuadTree.is_shape_a_valid_shape(shape):
-				print("Invalid object was passed into insert_single.")
+			print("Invalid object was passed into insert_single.")
+			return False
 		contains_shape = self.does_x_collide_with_y(self.boundary, shape)
 		if not contains_shape:
+			#print('does not contain')
 			return False
-		if len(self.shapes) < self.capacity:
+		if (self.depth==MAX_QUAD_TREE_DEPTH) or len(self.shapes) < self.capacity:
+			#print('append')
 			self.shapes.append(shape)
 			return True
 		if not self._divided:
+			#print('subdivide')
 			self._subdivide()
-		if self._northeast.insert_single(shape) or self._northwest.insert_single(shape) or self._southeast.insert_single(shape) or self._southwest.insert_single(shape):
+		if self._northeast.insert_single(shape):
+			#print('ne')
 			return True
+		if self._northwest.insert_single(shape):
+			#print('nw')
+			return True
+		if self._southeast.insert_single(shape):
+			#print('se')
+			return True
+		if self._southwest.insert_single(shape):
+			#print('sw')
+			return True
+		#print('fail')
 		return False
 
 	def insert_array(self, shapes : list[QD_T_COMPONENTS]) -> None:
 		for shape in shapes:
-			if not QuadTree.is_shape_a_valid_shape(shape):
-				print(f"Invalid object was passed into insert_array at index {shapes.index(shape) + 1}.")
-				continue
-			contains_shape = self.does_x_collide_with_y(self.boundary, shape)
-			if not contains_shape:
-				print('boundary does not contain shape')
-				continue
-			if len(self.shapes) < self.capacity:
-				self.shapes.append(shape)
-				continue
-			if not self._divided:
-				self._subdivide()
-			print('insert in depth')
-			if self._northeast.insert_single(shape) or self._northwest.insert_single(shape) or self._southeast.insert_single(shape) or self._southwest.insert_single(shape):
-				continue
+			self.insert_single(shape)
 
 	def _subdivide(self) -> None:
-		x = self.boundary.x
-		y = self.boundary.y
 		w = self.boundary.w
 		h = self.boundary.h
-		self._northeast = QuadTree( boundary = Rectangle( x + w/4, y - h/4, w/2, h/2 ), capacity = self.capacity )
-		self._northwest = QuadTree( boundary = Rectangle( x - w/4, y - h/4, w/2, h/2 ), capacity = self.capacity )
-		self._southeast = QuadTree( boundary = Rectangle( x + w/4, y + h/4, w/2, h/2 ), capacity = self.capacity)
-		self._southwest = QuadTree( boundary = Rectangle( x - w/4, y + h/4, w/2, h/2 ), capacity = self.capacity )
+		self._northeast = QuadTree(boundary=Rectangle( self.boundary.x+w/4, self.boundary.y-h/4, w/2, h/2 ), capacity=self.capacity, depth=self.depth+1)
+		self._northwest = QuadTree(boundary=Rectangle( self.boundary.x-w/4, self.boundary.y-h/4, w/2, h/2 ), capacity=self.capacity, depth=self.depth+1)
+		self._southeast = QuadTree(boundary=Rectangle( self.boundary.x+w/4, self.boundary.y+h/4, w/2, h/2 ), capacity=self.capacity, depth=self.depth+1)
+		self._southwest = QuadTree(boundary=Rectangle( self.boundary.x-w/4, self.boundary.y+h/4, w/2, h/2 ), capacity=self.capacity, depth=self.depth+1)
 		self._divided = True
 
-	def get_shapes(self, shapes_array=None ) -> list:
-		if shapes_array == None:
-			shapes_array = []
+	def get_shapes(self, array=[] ) -> list:
 		for shape in self.shapes:
-			if shapes_array.count(shape) == 0:
-				shapes_array.append(shape)
+			if array.count(shape) == 0:
+				array.append(shape)
 		if self._divided:
-			self._northeast.get_shapes(shapes_array=shapes_array)
-			self._northwest.get_shapes(shapes_array=shapes_array)
-			self._southeast.get_shapes(shapes_array=shapes_array)
-			self._southwest.get_shapes(shapes_array=shapes_array)
-		return shapes_array
+			self._northeast.get_shapes(array=array)
+			self._northwest.get_shapes(array=array)
+			self._southeast.get_shapes(array=array)
+			self._southwest.get_shapes(array=array)
+		return array
 
 	def find_quadtree_from_point(self, point : Point):
 		if not self.boundary.does_contain_point( point ):
@@ -149,8 +159,8 @@ class QuadTree:
 
 	def brute_raycast(self, line_seg : LineSegment) -> tuple[QD_RANGE_COMPONENTS, tuple[float, float], None]:
 		def dist_sqrd(x0, y0, x1, y1) -> float:
-			dx = x1 - x0
-			dy = y1 - y0
+			dx = (x1 - x0)
+			dy = (y1 - y0)
 			return (dx * dx) + (dy * dy)
 		hit = point = None
 		dist = -1
@@ -162,13 +172,16 @@ class QuadTree:
 				dist = distt
 				point = pointt
 		for obj in self.get_shapes():
-			dat = self.does_x_collide_with_y(obj, line_seg)
+			dat = self.find_ray_collision_with_y(line_seg, obj)
+			#print(dat)
+			if type(dat) == list:
+				dat = dat[0]
 			if dat != None:
 				check_closest(obj, dat)
 		return hit, dist, point
 
-	def __init__(self, boundary=None, capacity=DEFAULT_QUAD_TREE_CAPACITY, shapes=[]):
+	def __init__(self, boundary=None, capacity=DEFAULT_QUAD_TREE_CAPACITY, depth=0):
 		self.boundary = boundary
 		self.capacity = capacity
-		if len(shapes) > 0:
-			self.insert_array(shapes)
+		self.depth = depth
+		print(depth)
