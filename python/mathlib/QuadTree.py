@@ -38,12 +38,23 @@ class QuadTree:
 	_southwest=None
 
 	@staticmethod
-	def is_shape_a_valid_shape(_shape) -> None:
+	def is_shape_a_valid_shape(_shape) -> bool:
 		# if the class is directly found in the valid classes, return true
 		if VALID_CLASSES.count(_shape.__class__) != 0:
 			return True
 		# if the class is not, check if the class is a subclass of any of the valid ones (inheriting it)
 		for base in VALID_CLASSES:
+			if issubclass(_shape.__class__, base):
+				return True
+		return False
+
+	@staticmethod
+	def is_shape_a_valid_range(_shape) -> bool:
+		# if the class is directly found in the valid classes, return true
+		if VALID_RANGE_CLASSES.count(_shape.__class__) != 0:
+			return True
+		# if the class is not, check if the class is a subclass of any of the valid ones (inheriting it)
+		for base in VALID_RANGE_CLASSES:
 			if issubclass(_shape.__class__, base):
 				return True
 		return False
@@ -80,13 +91,14 @@ class QuadTree:
 		return False
 
 	def query(self, _range : Union[Rectangle, Circle], shape_array : Union[list, None]) -> list:
-		if VALID_RANGE_CLASSES.count(_range.__class__) == 0:
-			raise ValueError("Invalid _range argument passed. Does not match the class of Rectangle or Circle.")
+		if not QuadTree.is_shape_a_valid_range(_range):
+			print("Invalid _range argument passed. Does not match the class of Rectangle or Circle.")
+			return None
 		if shape_array == None:
 			shape_array = []
 		if self.does_x_collide_with_y(_range, self.boundary):
 			for shape in self.shapes:
-				if self.does_x_collide_with_y(_range, shape): #if (p.__class__ == Point.__class__ and _range.does_contains_point(p)) or (p.__class__ == Rectangle.__class__ and _range.does_intersects_rectangle(p)):
+				if self.does_x_collide_with_y(_range, shape):
 					if shape_array.count(shape) == 0:
 						shape_array.append(shape)
 			if self._divided:
