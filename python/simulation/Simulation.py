@@ -15,14 +15,14 @@ from geometry.Rectangle import Rectangle
 from geometry.Point import Point
 from geometry.Circle import Circle
 from geometry.LineSegment import LineSegment
-from mathlib import QuadTree, Mathf
+from mathlib.Vector2 import Vector2
+from mathlib import QuadTree
 
 sys_path.pop()
 
 class Agent(Circle):
 	speed = 1 # speed
-	rad = 0 # current facing angle
-	turn_rad = 0 # delta turn angle
+	vel = Vector2(0,0)
 	def __init__(self, x, y, radius):
 		super().__init__(x, y, radius)
 
@@ -90,51 +90,35 @@ class Simulation:
 	def step_physics(self, delta_time : float, wrap_bounds=True, epsilon_v = 1e-3):
 		# step physics
 		for agent in self.__agents:
-			vx, vy = Mathf.AngleToVector(agent.rad)
 			speed_delta = agent.speed * delta_time
-			agent.x += vx * speed_delta
-			agent.y += vy * speed_delta
+			agent.x += agent.vel.x * speed_delta
+			agent.y += agent.vel.y * speed_delta
 			if wrap_bounds:
 				self._check_bounds_wrap(agent)
+
 		# bounce off each other, separate positions, reflect direction
-		# for agent in self.get_agents():
-		# 	# for each nearby agents
-		# 	nearby = self.__agent_quadtree.query( agent, None )
-		# 	# if no nearby, ignore altogether
-		# 	if len(nearby) == 0:
-		# 		continue
-		# 	for near in nearby:
-		# 		tangentVector = array(-(near.x - agent.x), near.y - agent.y)
+		for agent in self.get_agents():
+			nearby = self.__agent_quadtree.query( Circle(agent.x, agent.y, agent.radius), None )
+			if len(nearby) == 0:
+				continue
+			for near in nearby:
 
-		# 		mag = sqrt( tangentVector[0] ** 2 + tangentVector[1] ** 2 )
-		# 		if mag < epsilon_v:
-		# 			mag = epsilon_v
-		# 		tangentVector = (tangentVector[0] / mag, tangentVector[1] / mag)
+				midpoint = Vector2( (near.x + agent.x) / 2, (near.y + agent.y) / 2 )
+				delta = Vector2(near.x - agent.x, near.y - agent.y)
 
-		# 		c2_d_x, c2_d_y = Mathf.AngleToVector(near.rad)
-		# 		c1_d_x, c1_d_y = Mathf.AngleToVector(agent.rad)
+				dist = delta.magnitude()
+				if dist < 1e-3:
+					dist = 1e-3
+				agent.x = midpoint.x - (agent.radius * delta.x) / dist
+				agent.y = midpoint.y - (agent.radius * delta.y) / dist
+				near.x = midpoint.x + (near.radius * delta.x) / dist
+				near.y = midpoint.y + (near.radius * delta.y) / dist
 
-		# 		c2_v_x = c2_d_x * near.speed
-		# 		c2_v_y = c2_d_y * near.speed
-
-		# 		c1_v_x = c1_d_x * near.speed
-		# 		c1_v_y = c1_d_y * near.speed
-
-		# 		relativeVelocity = array( c2_v_x-c1_v_x, c2_v_y-c1_v_y )
-		# 		length = relativeVelocity.dot(tangentVector)
-		# 		velocityComponentOnTangent = tangentVector * length
-		# 		velocityComponentPerpendicularToTangent = relativeVelocity - velocityComponentOnTangent
-
-		# 		c1_v_x -= velocityComponentPerpendicularToTangent[0]
-		# 		c2_v_x -= velocityComponentPerpendicularToTangent[0]
-
-		# 		c1_v_y -= velocityComponentPerpendicularToTangent[1]
-		# 		c2_v_y -= velocityComponentPerpendicularToTangent[1]
-
-		# 		circle1.Velocity.X -= velocityComponentPerpendicularToTangent.X
-		# 		circle1.Velocity.Y -= velocityComponentPerpendicularToTangent.Y
-		# 		circle2.Velocity.X += velocityComponentPerpendicularToTangent.X
-		# 		circle2.Velocity.Y += velocityComponentPerpendicularToTangent.Y
+				agent.vel *= -1
+				near.vel *= -1
+				# normal = delta.unit()
+				# agent.vel = agent.vel.reflect(normal).unit()
+				# near.vel = near.vel.reflect(normal).unit()
 
 	def __construct_quad_trees(self) -> None:
 		bounds = Rectangle(0, 0, self.__simulation_bounds[0], self.__simulation_bounds[1])

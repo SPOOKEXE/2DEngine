@@ -1,13 +1,14 @@
 
-from simulation.Simulation import Simulation, Agent
+import numpy
 
+from simulation.Simulation import Simulation, Agent
+from mathlib.Vector2 import Vector2
 from geometry.Rectangle import Rectangle
 from geometry.Point import Point
 from geometry.Circle import Circle
 from geometry.LineSegment import LineSegment
 
 from random import randint
-from math import pi
 from PIL import Image, ImageDraw
 
 SIMULATION_SIZE = (1280, 720)
@@ -20,10 +21,9 @@ for _ in range(TOTAL_AGENTS):
 	rX = randint(SPAWN_PADDING, SIMULATION_SIZE[0] - SPAWN_PADDING)
 	rY = randint(SPAWN_PADDING, SIMULATION_SIZE[1] - SPAWN_PADDING)
 	rRadius = int( randint(50, 100)/10 )
+	rVel = Vector2( randint(-100, 100) / 100, randint(-100, 100) / 100 ).unit()
 	agent = Agent( rX, rY, rRadius )
-	agent.vx = randint(-100, 100) / 100
-	agent.vy = randint(-100, 100) / 100
-	agent.rad = (randint( 1, 360 ) / 360) * pi
+	agent.vel = rVel
 	agentz.append(agent)
 
 # append a ton of agents
