@@ -42,3 +42,6 @@ class SimulationMethods:
 	# 			if dat != None:
 	# 				check_closest(obj, type(dat) == list and dat[0] or dat)
 	# 	return hit, dist, point
+
+class Simulation:
+	pass

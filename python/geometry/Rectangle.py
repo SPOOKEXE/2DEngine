@@ -1,4 +1,4 @@
-import Intersect
+from geometry import Intersect
 
 from typing import Union
 FLOAT_TUP = tuple[float, float]
