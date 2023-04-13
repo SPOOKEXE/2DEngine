@@ -7,13 +7,13 @@ class LineSegment:
 	x0 = y0 = None
 	x1 = y1 = None
 
-	def does_intersects_line_segment(self, line_seg) -> bool:
+	def does_intersect_line_segment(self, line_seg) -> bool:
 		return Intersect.does_line_intersect_line(self, line_seg)
 
-	def does_intersects_rectangle(self, rectangle) -> bool:
+	def does_intersect_rectangle(self, rectangle) -> bool:
 		return Intersect.does_line_intersect_rectangle(self, rectangle)
 
-	def does_intersects_circle(self, circle) -> bool:
+	def does_intersect_circle(self, circle) -> bool:
 		return Intersect.does_line_intersect_circle(self, circle)
 
 	def get_line_line_intersection(self, line_seg) -> FLOAT_TUP:

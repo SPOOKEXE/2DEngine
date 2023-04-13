@@ -1,6 +1,6 @@
 
 import pygame
-import Intersect
+import python.geometry.Intersect as Intersect
 
 from os import path as os_path
 from sys import path as sys_path

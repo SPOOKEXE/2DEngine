@@ -6,13 +6,13 @@ FLOAT_TUP = tuple[float, float]
 class Rectangle:
 	x = y = w = h = None
 
-	def does_contains_point(self, point) -> bool:
+	def does_contain_point(self, point) -> bool:
 		return Intersect.does_rectangle_contain_point(self, point)
 
-	def does_intersects_rectangle(self, rect) -> bool:
+	def does_intersect_rectangle(self, rect) -> bool:
 		return Intersect.does_rectangle_intersect_rectangle(self, rect)
 
-	def does_intersects_circle(self, circle) -> bool:
+	def does_intersect_circle(self, circle) -> bool:
 		return Intersect.does_circle_intersect_rectangle(circle, self)
 
 	def does_intersect_line_segment(self, line_seg) -> bool:
